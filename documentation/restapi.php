@@ -1,17 +1,28 @@
 <style>
      .col-lg-4 ul {
-    list-style-type: none;
-   
+    list-style-type: none; 
+    }
+ 
+  .ol li{
+    font-size: 20px;
   }
   .card{
     border:none;
     padding:10px 30px;
     margin:0 10%;
   }
+  span{
+    font-size:20px;
+    text-align: justify;
+  }
   /* Style for the list items */
   .col-lg-4 li {
     padding: 5px 0;
    
+  }
+  p{
+    text-align: justify;
+    font-size: 20px;
   }
   .col-lg-4 li a{
     text-decoration:none;
@@ -93,12 +104,10 @@
             <br><br>
             <code>
                 {
-                "url": "https://google.com"       
+                  &nbsp; "url": "https://google.com"       
                 }
             </code>
             <br><br>
-          
-        
             <p>Include the following parameters in the request body:</p>
             <img width="100%" src="screenshot\Screenshot2.png" alt="Screenshot Example">  
             <p>Your screenshots will be saved in the following path:</p>
@@ -133,9 +142,9 @@
             <code><b style="font-size:20px;"><em>Width</em></b></code>: <span>(Optional) Specify the width of the viewport screenshot image. The default width is 1024 pixels<span></code>.
             <br><br> 
             <code> {<br>
-                "url": "https://facebook.com",<br>
-                "filename":"file32",<br>
-                "height":200         <br>
+                   "url": "https://facebook.com",<br>
+                  "filename":"file32",<br>
+                   "height":200         <br>
                 }<br>
                 or<br>
                 {<br>
