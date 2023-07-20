@@ -87,7 +87,7 @@
                     <br>
                     <code>
                         {<br>
-                        "url": "https://google.com"       <br>
+                           &nbsp;&nbsp;"url": "https://google.com"       <br>
                         }<br>
                     </code>
                      <br>
@@ -204,7 +204,7 @@
                 <h3 id="postman-section">  To use Postman Desktop, follow these steps:</h3>
               
                 <ol>
-                <li>Download and Install Postman: Go to the official Postman website<code><a href="https://www.postman.com/">(https://www.postman.com/)</a></code> and download the appropriate version of Postman Desktop for your operating system (Windows, macOS, or Linux). Once the download is complete, run the installer and follow the on-screen instructions to install Postman.</li>
+                <li>Download and Install Postman: Go to the official Postman website<code><a href="https://www.postman.com/downloads/">(https://www.postman.com/)</a></code> and download the appropriate version of Postman Desktop for your operating system (Windows, macOS, or Linux). Once the download is complete, run the installer and follow the on-screen instructions to install Postman.</li>
 
                 <li>Launch Postman: After installation, open the Postman application on your computer. It should be available in your applications or programs list.</li>
 

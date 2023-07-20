@@ -2,187 +2,176 @@
 /*
 Plugin Name: Screenshot-Plugin
 Description: Convert URL or HTML content into an image.
-version: 5.0
+Version: 1.0
 Author: Mehak Illahi
 
 */
-  defined( 'ABSPATH' ) || exit;
-   if( ! class_exists( 'WebfortUpdaterChecker' ) ) {
 
-	class WebfortUpdaterChecker{
+defined( 'ABSPATH' ) || exit;
+if( ! class_exists( 'WebfortUpdaterChecker' ) ) {
 
-		public $plugin_slug;
-		public $version;
-		public $cache_key;
-		public $cache_allowed;
+ class WebfortUpdaterChecker{
 
-		public function __construct() {
+     public $plugin_slug;
+     public $version;
+     public $cache_key;
+     public $cache_allowed;
 
-			$this->plugin_slug = plugin_basename( __DIR__ );
-			$this->version = '1.0';
-			$this->cache_key = 'misha_custom_upd';
-			$this->cache_allowed = false;
+     public function __construct() {
 
-			add_filter( 'plugins_api', array( $this, 'info' ), 20, 3 );
-			add_filter( 'site_transient_update_plugins', array( $this, 'update' ) );
-			add_action( 'upgrader_process_complete', array( $this, 'purge' ), 10, 2 );
+         $this->plugin_slug = plugin_basename( __DIR__ );
+         $this->version = '1.0';
+         $this->cache_key = 'brave_screenshotter_library';
+         $this->cache_allowed = false;
 
-		}
+         add_filter( 'plugins_api', array( $this, 'info' ), 20, 3 );
+         add_filter( 'site_transient_update_plugins', array( $this, 'update' ) );
+         add_action( 'upgrader_process_complete', array( $this, 'purge' ), 10, 2 );
 
-		public function request(){
+     }
 
-			$remote = get_transient( $this->cache_key );
+     public function request(){
 
-			if( false === $remote || ! $this->cache_allowed ) {
+         $remote = get_transient( $this->cache_key );
 
-				
+         if( false === $remote || ! $this->cache_allowed ) {
 
-				$remote = wp_remote_get(
-					"https://raw.githubusercontent.com/Mehakillahi121/wp-screenshot-updater/main/info.json",
-					array(
-						'timeout' => 10,
-						'headers' => array(
-							'Accept' => 'application/json',
+             
 
-							
-						)
-					)
-				);
-				if(
-					is_wp_error( $remote )
-					|| 200 !== wp_remote_retrieve_response_code( $remote )
-					|| empty( wp_remote_retrieve_body( $remote ) )
-				) {
-					return false;
-				}
+             $remote = wp_remote_get(
+                 "https://raw.githubusercontent.com/shishirraven/screenshotter_wp/main/info.json",
+                 array(
+                     'timeout' => 10,
+                     'headers' => array(
+                         'Accept' => 'application/json',
 
-				set_transient( $this->cache_key, $remote, DAY_IN_SECONDS );
+                         
+                     )
+                 )
+             );
+             if(
+                 is_wp_error( $remote )
+                 || 200 !== wp_remote_retrieve_response_code( $remote )
+                 || empty( wp_remote_retrieve_body( $remote ) )
+             ) {
+                 return false;
+             }
 
-			}
+             set_transient( $this->cache_key, $remote, DAY_IN_SECONDS );
 
-			$remote = json_decode( wp_remote_retrieve_body( $remote ) );
+         }
 
-			return $remote;
-			
+         $remote = json_decode( wp_remote_retrieve_body( $remote ) );
 
-		}
+         return $remote;
+         
 
-
-		function info( $res, $action, $args ) {
-
-			// print_r( $action );
-			// print_r( $args );
-
-			// do nothing if you're not getting plugin information right now
-			if( 'plugin_information' !== $action ) {
-				return $res;
-			}
-
-			// do nothing if it is not our plugin
-			if( $this->plugin_slug !== $args->slug ) {
-				return $res;
-			}
-
-			// get updates
-			$remote = $this->request();
-
-			if( ! $remote ) {
-				return $res;
-			}
-
-			$res = new stdClass();
-
-			$res->name = $remote->name;
-			$res->slug = $remote->slug;
-			$res->version = $remote->version;
-			$res->tested = $remote->tested;
-			$res->requires = $remote->requires;
-			$res->author = $remote->author;
-			$res->author_profile = $remote->author_profile;
-			$res->download_link = $remote->download_url;
-			$res->trunk = $remote->download_url;
-			$res->requires_php = $remote->requires_php;
-			$res->last_updated = $remote->last_updated;
-
-			$res->sections = array(
-				'description' => $remote->sections->description,
-				'installation' => $remote->sections->installation,
-				'changelog' => $remote->sections->changelog
-			);
-
-			if( ! empty( $remote->banners ) ) {
-				$res->banners = array(
-					'low' => $remote->banners->low,
-					'high' => $remote->banners->high
-				);
-			}
-
-			return $res;
-
-		}
-
-		public function update( $transient ) {
-
-			if ( empty($transient->checked ) ) {
-				return $transient;
-			}
-
-			$remote = $this->request();
-
-			if(
-				$remote
-				&& version_compare( $this->version, $remote->version, '<' )
-				&& version_compare( $remote->requires, get_bloginfo( 'version' ), '<=' )
-				&& version_compare( $remote->requires_php, PHP_VERSION, '<' )
-			) {
-				$res = new stdClass();
-				$res->slug = $this->plugin_slug;
-				$res->plugin = plugin_basename( __FILE__ ); // misha-update-plugin/misha-update-plugin.php
-				$res->new_version = $remote->version;
-				$res->tested = $remote->tested;
-				$res->package = $remote->download_url;
-
-				$transient->response[ $res->plugin ] = $res;
-
-	    }
-
-			return $transient;
-
-		}
-
-		public function purge( $upgrader, $options ){
-
-			if (
-				$this->cache_allowed
-				&& 'update' === $options['action']
-				&& 'plugin' === $options[ 'type' ]
-			) {
-				// just clean the cache when new plugin version is installed
-				delete_transient( $this->cache_key );
-			}
-
-		}
+     }
 
 
-	}
+     function info( $res, $action, $args ) {
 
-	new WebfortUpdaterChecker();
+
+         // do nothing if you're not getting plugin information right now
+         if( 'plugin_information' !== $action ) {
+             return $res;
+         }
+
+         // do nothing if it is not our plugin
+         if( $this->plugin_slug !== $args->slug ) {
+             return $res;
+         }
+
+         // get updates
+         $remote = $this->request();
+
+         if( ! $remote ) {
+             return $res;
+         }
+
+         $res = new stdClass();
+
+         $res->name = $remote->name;
+         $res->slug = $remote->slug;
+         $res->version = $remote->version;
+         $res->tested = $remote->tested;
+         $res->requires = $remote->requires;
+         $res->author = $remote->author;
+         $res->author_profile = $remote->author_profile;
+         $res->download_link = $remote->download_url;
+         $res->trunk = $remote->download_url;
+         $res->requires_php = $remote->requires_php;
+         $res->last_updated = $remote->last_updated;
+
+         $res->sections = array(
+             'description' => $remote->sections->description,
+             'installation' => $remote->sections->installation,
+             'changelog' => $remote->sections->changelog
+         );
+
+         if( ! empty( $remote->banners ) ) {
+             $res->banners = array(
+                 'low' => $remote->banners->low,
+                 'high' => $remote->banners->high
+             );
+         }
+
+         return $res;
+
+     }
+
+     public function update( $transient ) {
+
+         if ( empty($transient->checked ) ) {
+             return $transient;
+         }
+
+         $remote = $this->request();
+
+         if(
+             $remote
+             && version_compare( $this->version, $remote->version, '<' )
+             && version_compare( $remote->requires, get_bloginfo( 'version' ), '<=' )
+             && version_compare( $remote->requires_php, PHP_VERSION, '<' )
+         ) {
+             $res = new stdClass();
+             $res->slug = $this->plugin_slug;
+             $res->plugin = plugin_basename( __FILE__ ); 
+             $res->new_version = $remote->version;
+             $res->tested = $remote->tested;
+             $res->package = $remote->download_url;
+
+             $transient->response[ $res->plugin ] = $res;
+
+     }
+
+         return $transient;
+
+     }
+
+     public function purge( $upgrader, $options ){
+
+         if (
+             $this->cache_allowed
+             && 'update' === $options['action']
+             && 'plugin' === $options[ 'type' ]
+         ) {
+             // just clean the cache when new plugin version is installed
+             delete_transient( $this->cache_key );
+         }
+
+     }
+
+
+ }
+
+ new WebfortUpdaterChecker();
 
 }
-
 register_activation_hook(__FILE__, 'activation');
 
 function activation() {
     add_action('admin_menu', 'screenshot_add_submenu_page');
-   // add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'my_custom_plugin_documentation_link');
-   $node_modules_path = plugin_dir_path(__FILE__) . 'node_modules';
-    
-   // Check if the 'node_modules' directory exists
-   if (is_dir($node_modules_path)) {
-       // Run the 'npm install' command
-       $command = 'npm --prefix ' . escapeshellarg($node_modules_path) . ' install ' . escapeshellarg($node_modules_path);
-       exec($command);
-   }
 }
 
 add_action('admin_init', 'your_plugin_add_action_link_on_activation');
@@ -239,13 +228,15 @@ class Webfort_ScreenshotPlugin {
         if ($phpIniPath) {
             $phpIniContents = file_get_contents($phpIniPath); // Read the contents of php.ini
             
-            // Replace the string "extension=socket" with ";extension=socket"
+            // Replace the string ";extension=socket" with "extension=socket"
             $phpIniContents = str_replace(';extension=sockets', 'extension=sockets', $phpIniContents);
             
             file_put_contents($phpIniPath, $phpIniContents); // Write the updated contents back to php.ini
-                
-           $stopCommand = 'C:\xampp\apache\bin\httpd.exe -k stop';
+           
+            //Stop Apache
+            $stopCommand = 'C:\xampp\apache\bin\httpd.exe -k stop';
             exec($stopCommand);
+
             // Start Apache
             $startCommand = 'C:\xampp\apache\bin\httpd.exe -k start';
             exec($startCommand);
@@ -270,8 +261,6 @@ class Webfort_ScreenshotPlugin {
         $width = $request->get_param('width') ? intval($request->get_param('width')) : 1024;
         $directory = $request->get_param('directory') ? trim($request->get_param('directory')) : 'images';
         $isMobile = $request->get_param('mobile_view') ? filter_var($request->get_param('mobile_view'), FILTER_VALIDATE_BOOLEAN) : false;
-
-        // Activation code goes here
 
         // Generate a UUID if the filename is not provided
         if (empty($filename)) {
@@ -374,9 +363,7 @@ class Webfort_ScreenshotPlugin {
     }
 
     public function upload_screenshot_image($fileDetail, $post_id) {
-        ini_set('display_errors', 1);
-        error_reporting(E_ALL);
-        
+     
         $file_path = $fileDetail['path'];
         $fileDirPath = $fileDetail['dirPath'];
         $fileDirPath = str_replace('\\', "/", $fileDirPath);
@@ -384,7 +371,7 @@ class Webfort_ScreenshotPlugin {
         $targetDir = str_replace('\\', "/", $targetDir);
         $targetFile = $targetDir . '/' . basename($file_path);
       
-        if (copy($fileDirPath, $targetFile)) {  /// to move use rename 
+        if (rename($fileDirPath, $targetFile)) {  /// to move use rename 
             $file_type = wp_check_filetype(basename($file_path), null);
             $attachment_data = array(
                 'guid' => $targetFile,
